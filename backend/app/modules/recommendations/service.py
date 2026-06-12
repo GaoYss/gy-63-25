@@ -2,13 +2,18 @@ from app.core.store import store
 from app.modules.recommendations.models import FruitRecommendation
 
 
-def list_recommendations(member_id: int | None = None) -> list[FruitRecommendation]:
+def list_recommendations(
+    member_id: int | None = None,
+    origin: str | None = None,
+) -> list[FruitRecommendation]:
     favorites: set[str] = set()
     if member_id and member_id in store.members:
         favorites = set(store.members[member_id]["favorite_categories"])
 
     recommendations = []
     for fruit in store.fruits.values():
+        if origin and fruit["origin"] != origin:
+            continue
         reason = "新鲜度高，适合作为今日主推"
         if fruit["category"] in favorites:
             reason = "匹配会员偏好，建议优先推荐"
@@ -20,3 +25,7 @@ def list_recommendations(member_id: int | None = None) -> list[FruitRecommendati
         recommendations,
         key=lambda item: (item.category not in favorites, -item.freshness_score),
     )
+
+
+def list_origins() -> list[str]:
+    return sorted({fruit["origin"] for fruit in store.fruits.values()})

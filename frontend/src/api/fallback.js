@@ -157,3 +157,5 @@ export const fallbackRecommendations = [
     reason: '到店批次新鲜度高，可提升复购',
   },
 ]
+
+export const fallbackOrigins = ['四川', '云南', '新西兰', '泰国']

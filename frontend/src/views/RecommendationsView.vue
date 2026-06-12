@@ -10,12 +10,20 @@
     <section class="panel">
       <div class="panel-header">
         <h2>新鲜水果推荐</h2>
-        <select v-model.number="selectedMemberId" @change="loadRecommendations">
-          <option :value="0">通用推荐</option>
-          <option v-for="member in members" :key="member.id" :value="member.id">
-            {{ member.name }}
-          </option>
-        </select>
+        <div class="filters">
+          <select v-model.number="selectedMemberId" @change="loadRecommendations">
+            <option :value="0">通用推荐</option>
+            <option v-for="member in members" :key="member.id" :value="member.id">
+              {{ member.name }}
+            </option>
+          </select>
+          <select v-model="selectedOrigin" @change="loadRecommendations">
+            <option value="">全部产地</option>
+            <option v-for="origin in origins" :key="origin" :value="origin">
+              {{ origin }}
+            </option>
+          </select>
+        </div>
       </div>
       <div class="recommendation-grid">
         <article v-for="fruit in recommendations" :key="fruit.id" class="fruit-card">
@@ -42,15 +50,17 @@
 import { computed, onMounted, ref } from 'vue'
 import { Boxes, Gauge, Sprout, UserRound } from 'lucide-vue-next'
 
-import { fallbackMembers, fallbackRecommendations } from '../api/fallback'
+import { fallbackMembers, fallbackOrigins, fallbackRecommendations } from '../api/fallback'
 import { memberApi } from '../api/members'
 import { recommendationApi } from '../api/recommendations'
 import StatCard from '../components/StatCard.vue'
 import { keepList } from '../utils/dataState'
 
 const members = ref([...fallbackMembers])
+const origins = ref([...fallbackOrigins])
 const recommendations = ref([...fallbackRecommendations])
 const selectedMemberId = ref(0)
+const selectedOrigin = ref('')
 
 const topFreshness = computed(() => Math.max(...recommendations.value.map((fruit) => fruit.freshness_score), 0))
 const selectedMemberName = computed(() => {
@@ -61,7 +71,7 @@ const categoryCount = computed(() => new Set(recommendations.value.map((fruit) =
 
 async function loadRecommendations() {
   const recommendationList = await recommendationApi
-    .list(selectedMemberId.value || undefined)
+    .list(selectedMemberId.value || undefined, selectedOrigin.value || undefined)
     .catch(() => fallbackRecommendations)
   recommendations.value = keepList(recommendationList, recommendations.value)
 }
@@ -69,6 +79,8 @@ async function loadRecommendations() {
 onMounted(async () => {
   const memberList = await memberApi.list().catch(() => fallbackMembers)
   members.value = keepList(memberList, members.value)
+  const originList = await recommendationApi.getOrigins().catch(() => fallbackOrigins)
+  origins.value = keepList(originList, origins.value)
   await loadRecommendations()
 })
 </script>
